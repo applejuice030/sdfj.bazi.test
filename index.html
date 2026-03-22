@@ -514,10 +514,17 @@
                     });
                 }
 
+// 🚨 1. 对数组进行排序（根据 finalScore 从高到低）
                 allResults.sort((a, b) => b.finalScore - a.finalScore);
 
-                let top3 = allResults.slice(0, 3);
+                // 🚨 2. 新增绝招：找出前三名到底有哪几个不同的分数（比如 75分, 50分, 40分）
+                let uniqueScores = [...new Set(allResults.map(r => r.finalScore))];
+                let top3Scores = uniqueScores.slice(0, 3);
 
+                // 🚨 3. 把所有等于这三个分数的人全挑出来（解决平局被挤掉的问题）
+                let topMatches = allResults.filter(r => top3Scores.includes(r.finalScore));
+
+                // --- 组装最终呈现的 HTML ---
                 let resultHtml = `
                     <hr style="border: 0; border-top: 2px dashed #af2a2d; margin: 25px 0;">
                     <p style="color:#666; font-size:14px;">你的八字：<strong>${userYearGanZhi}年 ${userMonthGanZhi}月 ${userDayGanZhi}日</strong><br>日主属：<strong>${userWuxing}</strong> | 星座：<strong>${userZodiac}</strong></p>
@@ -528,17 +535,21 @@
                 const borderColors = ["#af2a2d", "#a4b0be", "#ced6e0"];
                 const badgeColors = ["#af2a2d", "#747d8c", "#a4b0be"];
 
-                for (let k = 0; k < top3.length; k++) {
-                    let match = top3[k];
+                // 循环生成卡片（现在有几个人并列，就会生成几张卡片）
+                for (let k = 0; k < topMatches.length; k++) {
+                    let match = topMatches[k];
+                    
+                    // 找到这个人的分数到底排第几（用来发对应颜色的奖牌）
+                    let rankIndex = top3Scores.indexOf(match.finalScore);
                     
                     let reasonsHtml = match.reasons.map(r => `<p style="text-align:left; font-size:13px; color:#555; background:#fff0f5; padding:8px; border-radius:5px; margin:5px 0; line-height: 1.5;">${r}</p>`).join('');
 
                     resultHtml += `
-                        <div style="background:#fdfbfb; border: 2px solid ${borderColors[k]}; padding: 15px; border-radius: 10px; margin-bottom: 25px; position: relative;">
-                            <div style="position: absolute; top: -14px; left: 15px; background: ${badgeColors[k]}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                ${medalNames[k]}
+                        <div style="background:#fdfbfb; border: 2px solid ${borderColors[rankIndex]}; padding: 15px; border-radius: 10px; margin-bottom: 25px; position: relative;">
+                            <div style="position: absolute; top: -14px; left: 15px; background: ${badgeColors[rankIndex]}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                                ${medalNames[rankIndex]}
                             </div>
-                            <p style="font-size: 26px; color: ${k === 0 ? '#af2a2d' : '#2f3542'}; font-weight: bold; margin: 15px 0 5px 0; letter-spacing: 2px;">
+                            <p style="font-size: 26px; color: ${rankIndex === 0 ? '#af2a2d' : '#2f3542'}; font-weight: bold; margin: 15px 0 5px 0; letter-spacing: 2px;">
                                 ${match.idol.name}
                             </p>
                             <p style="font-size: 14px; color: #ff4757; font-weight: bold; margin-bottom: 15px;">
